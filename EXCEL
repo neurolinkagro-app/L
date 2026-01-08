@@ -1,0 +1,20 @@
+from fastapi import FastAPI, UploadFile
+import pandas as pd
+
+app = FastAPI()
+
+@app.post("/upload/inventory")
+async def upload_inventory(file: UploadFile):
+    df = pd.read_excel(file.file)
+    alerts = []
+
+    for _, row in df.iterrows():
+        if (pd.to_datetime(row["fecha_vencimiento"]) - pd.Timestamp.now()).days < 10:
+            alerts.append({
+                "producto": row["producto"],
+                "lote": row["lote"],
+                "riesgo": "Vencimiento próximo",
+                "impacto_estimado": row["cantidad"] * 5
+            })
+
+    return {"alertas": alerts}
